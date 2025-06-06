@@ -1,0 +1,2963 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FERO AND COMPANY Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4A98E1',
+                    }
+                }
+            }
+        }
+
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+    <style>
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-container {
+            transition: transform 0.25s ease;
+        }
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal.active .modal-container {
+            transform: scale(1);
+        }
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid rgba(74, 152, 225, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #4A98E1;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Toast notification */
+        .toast {
+            animation: slide-in 0.3s ease-out, fade-out 0.5s ease-out 2.5s forwards;
+            transform: translateY(0);
+        }
+        @keyframes slide-in {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fade-out {
+            from { opacity: 1; }
+            to { opacity: 0; visibility: hidden; }
+        }
+        /* Page transitions */
+        .page {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .page.active {
+            opacity: 1;
+            transform: translateX(0);
+            display: block;
+        }
+        .page.inactive {
+            opacity: 0;
+            transform: translateX(20px);
+            display: none;
+        }
+        /* Chart styles */
+        .chart-bar {
+            transition: height 0.5s ease-out;
+        }
+        /* Theme toggle switch */
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 26px;
+        }
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4A98E1;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .slider:after {
+            content: '☀️';
+            position: absolute;
+            left: 8px;
+            top: 3px;
+            font-size: 12px;
+        }
+        input:checked + .slider:after {
+            content: '🌙';
+            left: 28px;
+        }
+        /* Grid/List view toggle */
+        .view-toggle-btn.active {
+            background-color: #4A98E1;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-primary flex items-center justify-center">
+                            <i class="fas fa-palette text-white"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 text-xl font-bold">FERo's Gallery Dashboard</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="relative mx-4">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search-input" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 focus:outline-none focus:ring-primary focus:border-primary text-base" placeholder="Search artwork...">
+                    </div>
+                    <button id="add-artwork-btn" class="bg-primary text-white px-4 py-2 rounded-md ml-2 hover:bg-opacity-90">
+                        <i class="fas fa-plus mr-2"></i>New
+                    </button>
+                    <div class="ml-4 flex items-center">
+                        <label class="theme-switch mx-3">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider"></span>
+                        </label>
+                        <button id="notification-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
+                        </button>
+                        <button id="settings-btn" class="ml-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                            <i class="fas fa-cog text-xl"></i>
+                        </button>
+                        <div class="ml-4 h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
+                            <span class="text-sm font-medium">AG</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <div class="hidden md:flex md:flex-shrink-0">
+            <div class="flex flex-col w-64 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <div class="h-0 flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
+                    <nav class="flex-1 px-2 space-y-1">
+                        <a href="#" data-page="home" class="nav-link bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-home mr-3 text-primary"></i>
+                            Home
+                        </a>
+                        <a href="#" data-page="inbox" class="nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-inbox mr-3 text-gray-400 dark:text-gray-500"></i>
+                            Inbox
+                            <span class="bg-primary text-white ml-auto inline-block py-0.5 px-2 text-xs rounded-full">5</span>
+                        </a>
+                        <a href="#" data-page="documents" class="nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-file-alt mr-3 text-gray-400 dark:text-gray-500"></i>
+                            Documents
+                        </a>
+                        <a href="#" data-page="analytics" class="nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-chart-bar mr-3 text-gray-400 dark:text-gray-500"></i>
+                            Dashboard
+                        </a>
+                        <a href="#" data-page="exhibitions" class="nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-chalkboard mr-3 text-gray-400 dark:text-gray-500"></i>
+                            Exhibitions
+                        </a>
+                        <a href="#" data-page="more" class="nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-ellipsis-h mr-3 text-gray-400 dark:text-gray-500"></i>
+                            More
+                        </a>
+                    </nav>
+
+                    <div class="pt-4 pb-3 px-2">
+                        <h3 class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Collections
+                        </h3>
+                        <div class="mt-2 space-y-1">
+                            <a href="#" class="collection-filter group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-collection="Modern Art">
+                                <span class="w-2 h-2 mr-3 rounded-full bg-red-500"></span>
+                                <span>Modern Art</span>
+                            </a>
+                            <a href="#" class="collection-filter group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-collection="Renaissance">
+                                <span class="w-2 h-2 mr-3 rounded-full bg-blue-500"></span>
+                                <span>Renaissance</span>
+                            </a>
+                            <a href="#" class="collection-filter group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-collection="Impressionism">
+                                <span class="w-2 h-2 mr-3 rounded-full bg-green-500"></span>
+                                <span>Impressionism</span>
+                            </a>
+                            <a href="#" class="collection-filter group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-collection="Contemporary">
+                                <span class="w-2 h-2 mr-3 rounded-full bg-yellow-500"></span>
+                                <span>Contemporary</span>
+                            </a>
+                            <a href="#" class="collection-filter group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-collection="Photography">
+                                <span class="w-2 h-2 mr-3 rounded-full bg-purple-500"></span>
+                                <span>Photography</span>
+                            </a>
+                            <a href="#" class="collection-filter group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-collection="all">
+                                <span class="w-2 h-2 mr-3 rounded-full bg-gray-500"></span>
+                                <span>All Collections</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 flex border-t border-gray-200 dark:border-gray-700 p-4">
+                    <button id="view-profile-btn" class="flex-shrink-0 w-full group block">
+                        <div class="flex items-center">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Art Gallery Admin</p>
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                                    View profile
+                                </p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content area -->
+        <div class="flex-1 relative z-0 overflow-y-auto focus:outline-none">
+            <!-- Home Page -->
+            <div id="home-page" class="page active py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Gallery Collection</h1>
+                        <div class="flex space-x-2">
+                            <div class="flex rounded-md overflow-hidden">
+                                <button id="list-view-btn" class="view-toggle-btn px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 active">
+                                    <i class="fas fa-th-list mr-2"></i>List
+                                </button>
+                                <button id="grid-view-btn" class="view-toggle-btn px-4 py-2 border border-l-0 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <i class="fas fa-th-large mr-2"></i>Grid
+                                </button>
+                            </div>
+                            <button id="filter-btn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <i class="fas fa-filter mr-2"></i>Filter
+                            </button>
+                            <button id="add-artwork-btn-2" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90">
+                                <i class="fas fa-plus mr-2"></i>Add Artwork
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Featured Section -->
+                    <div class="mb-8 artwork-section" data-status="featured">
+                        <div class="flex items-center mb-4">
+                            <div class="w-6 h-6 rounded-full bg-yellow-500 text-white flex items-center justify-center mr-2">
+                                <i class="fas fa-star text-xs"></i>
+                            </div>
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Featured</h2>
+                            <span class="ml-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs category-count">0</span>
+                            <div class="ml-auto flex items-center">
+                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 mr-2 add-to-section" data-status="featured">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 section-menu-btn" data-section="featured">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                            <ul class="divide-y divide-gray-200 dark:divide-gray-700 artwork-list">
+                                <!-- Artwork items will be inserted here -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Current Exhibition Section -->
+                    <div class="mb-8 artwork-section" data-status="exhibition">
+                        <div class="flex items-center mb-4">
+                            <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2">
+                                <i class="fas fa-spinner text-xs"></i>
+                            </div>
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Current Exhibition</h2>
+                            <span class="ml-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs category-count">0</span>
+                            <div class="ml-auto flex items-center">
+                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 mr-2 add-to-section" data-status="exhibition">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 section-menu-btn" data-section="exhibition">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                            <ul class="divide-y divide-gray-200 dark:divide-gray-700 artwork-list">
+                                <!-- Artwork items will be inserted here -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Review Section -->
+                    <div class="mb-8 artwork-section" data-status="review">
+                        <div class="flex items-center mb-4">
+                            <div class="w-6 h-6 rounded-full bg-yellow-600 text-white flex items-center justify-center mr-2">
+                                <i class="fas fa-search text-xs"></i>
+                            </div>
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Under Review</h2>
+                            <span class="ml-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs category-count">0</span>
+                            <div class="ml-auto flex items-center">
+                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 mr-2 add-to-section" data-status="review">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 section-menu-btn" data-section="review">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                            <ul class="divide-y divide-gray-200 dark:divide-gray-700 artwork-list">
+                                <!-- Artwork items will be inserted here -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Coming Soon Section -->
+                    <div class="mb-8 artwork-section" data-status="upcoming">
+                        <div class="flex items-center mb-4">
+                            <div class="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center mr-2">
+                                <i class="fas fa-calendar-alt text-xs"></i>
+                            </div>
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Coming Soon</h2>
+                            <span class="ml-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs category-count">0</span>
+                            <div class="ml-auto flex items-center">
+                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 mr-2 add-to-section" data-status="upcoming">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 section-menu-btn" data-section="upcoming">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                            <ul class="divide-y divide-gray-200 dark:divide-gray-700 artwork-list">
+                                <!-- Artwork items will be inserted here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inbox Page -->
+            <div id="inbox-page" class="page inactive py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Inbox</h1>
+                        <div class="flex space-x-2">
+                            <button id="archive-btn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <i class="fas fa-archive mr-2"></i>Archive
+                            </button>
+                            <button id="compose-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90">
+                                <i class="fas fa-envelope mr-2"></i>Compose
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                        <div class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between">
+                            <div class="flex space-x-4">
+                                <button class="inbox-filter text-gray-700 dark:text-gray-300 font-medium" data-filter="all">
+                                    All
+                                </button>
+                                <button class="inbox-filter text-gray-500 dark:text-gray-400" data-filter="unread">
+                                    Unread
+                                </button>
+                                <button class="inbox-filter text-gray-500 dark:text-gray-400" data-filter="important">
+                                    Important
+                                </button>
+                            </div>
+                            <div>
+                                <button id="inbox-menu-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <ul id="inbox-list" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <li class="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex items-center">
+                                <div class="flex-shrink-0 mr-3">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-500 dark:text-blue-300 flex items-center justify-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex justify-between">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            John Smith
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            10:34 AM
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-900 dark:text-white font-medium">
+                                            New artwork submission
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                            I'd like to submit my latest painting series for consideration in the upcoming exhibition...
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex items-center">
+                                <div class="flex-shrink-0 mr-3">
+                                    <div class="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 text-green-500 dark:text-green-300 flex items-center justify-center">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex justify-between">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            Event Reminder
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            Yesterday
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-900 dark:text-white font-medium">
+                                            Contemporary Art Opening
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                            The exhibition opens this Friday at 7 PM. Please confirm your attendance...
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex items-center">
+                                <div class="flex-shrink-0 mr-3">
+                                    <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-500 dark:text-purple-300 flex items-center justify-center">
+                                        <i class="fas fa-paint-brush"></i>
+                                    </div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex justify-between">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            Collection Update
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            2 days ago
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-900 dark:text-white font-medium">
+                                            New acquisitions confirmed
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                            We've confirmed the purchase of three new pieces for the Impressionism collection...
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex items-center">
+                                <div class="flex-shrink-0 mr-3">
+                                    <div class="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-500 dark:text-yellow-300 flex items-center justify-center">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex justify-between">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            System Alert
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            3 days ago
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-900 dark:text-white font-medium">
+                                            Security update required
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                            Please update your security settings and password for the gallery management system...
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex items-center">
+                                <div class="flex-shrink-0 mr-3">
+                                    <div class="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900 text-red-500 dark:text-red-300 flex items-center justify-center">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </div>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex justify-between">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            Finance Department
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            1 week ago
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-900 dark:text-white font-medium">
+                                            Budget approval for Q3
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                            The budget for acquisitions in Q3 has been approved. Please review the attached details...
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Page -->
+            <div id="documents-page" class="page inactive py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Documents</h1>
+                        <div class="flex space-x-2">
+                            <button id="new-folder-btn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <i class="fas fa-folder mr-2"></i>New Folder
+                            </button>
+                            <button id="upload-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90">
+                                <i class="fas fa-upload mr-2"></i>Upload
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                        <div class="border-b border-gray-200 dark:border-gray-700 p-4">
+                            <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                                <a href="#" class="hover:text-primary docs-breadcrumb" data-path="root">Documents</a>
+                                <i class="fas fa-chevron-right text-xs"></i>
+                                <a href="#" class="hover:text-primary docs-breadcrumb" data-path="gallery">Gallery</a>
+                                <i class="fas fa-chevron-right text-xs"></i>
+                                <span class="text-gray-700 dark:text-gray-300">Exhibitions</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Folders section -->
+                        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Folders</h3>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+                            <div class="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md cursor-pointer folder-item" data-folder="exhibitions2023">
+                                <div class="flex items-center">
+                                    <div class="text-yellow-500 dark:text-yellow-400 mr-3">
+                                        <i class="fas fa-folder text-3xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">2023 Exhibitions</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">12 files</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md cursor-pointer folder-item" data-folder="contracts">
+                                <div class="flex items-center">
+                                    <div class="text-yellow-500 dark:text-yellow-400 mr-3">
+                                        <i class="fas fa-folder text-3xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">Artist Contracts</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">8 files</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md cursor-pointer folder-item" data-folder="marketing">
+                                <div class="flex items-center">
+                                    <div class="text-yellow-500 dark:text-yellow-400 mr-3">
+                                        <i class="fas fa-folder text-3xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">Marketing Materials</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">21 files</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md cursor-pointer folder-item" data-folder="acquisitions">
+                                <div class="flex items-center">
+                                    <div class="text-yellow-500 dark:text-yellow-400 mr-3">
+                                        <i class="fas fa-folder text-3xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">Acquisitions</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">15 files</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Files section -->
+                        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Recent Files</h3>
+                        </div>
+                        <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <li class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer file-item" data-file="proposal">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="text-blue-500 dark:text-blue-400 mr-3">
+                                            <i class="fas fa-file-word text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">Exhibition_Proposal.docx</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">245 KB - Modified yesterday</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 file-menu-btn" data-file="proposal">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer file-item" data-file="inventory">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="text-green-500 dark:text-green-400 mr-3">
+                                            <i class="fas fa-file-excel text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">Artwork_Inventory_2023.xlsx</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">1.2 MB - Modified 3 days ago</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 file-menu-btn" data-file="inventory">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer file-item" data-file="floorplan">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="text-red-500 dark:text-red-400 mr-3">
+                                            <i class="fas fa-file-pdf text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">Gallery_Floor_Plan.pdf</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">3.5 MB - Modified 1 week ago</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 file-menu-btn" data-file="floorplan">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer file-item" data-file="banner">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="text-purple-500 dark:text-purple-400 mr-3">
+                                            <i class="fas fa-file-image text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">Exhibition_Banner.psd</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">24.8 MB - Modified 2 weeks ago</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 file-menu-btn" data-file="banner">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer file-item" data-file="presentation">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="text-orange-500 dark:text-orange-400 mr-3">
+                                            <i class="fas fa-file-powerpoint text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">Board_Presentation.pptx</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">5.7 MB - Modified 3 weeks ago</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 file-menu-btn" data-file="presentation">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dashboard/Analytics Page -->
+            <div id="analytics-page" class="page inactive py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
+                        <div class="flex space-x-2">
+                            <div class="relative">
+                                <button id="date-range-btn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center">
+                                    <i class="fas fa-calendar-alt mr-2"></i>This Month
+                                    <i class="fas fa-chevron-down ml-2"></i>
+                                </button>
+                                <div id="date-range-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 hidden">
+                                    <div class="py-1">
+                                        <button class="date-range-option block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left" data-range="today">Today</button>
+                                        <button class="date-range-option block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left" data-range="week">This Week</button>
+                                        <button class="date-range-option block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left" data-range="month">This Month</button>
+                                        <button class="date-range-option block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left" data-range="quarter">This Quarter</button>
+                                        <button class="date-range-option block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left" data-range="year">This Year</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="export-btn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <i class="fas fa-download mr-2"></i>Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Total Artworks</h3>
+                                <div class="text-primary dark:text-primary bg-primary bg-opacity-10 dark:bg-opacity-20 rounded-full h-10 w-10 flex items-center justify-center">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-end">
+                                <p class="text-3xl font-bold text-gray-900 dark:text-white">248</p>
+                                <p class="ml-2 text-sm text-green-500 flex items-center">
+                                    <i class="fas fa-arrow-up mr-1"></i>12%
+                                </p>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">From last month</p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Active Exhibitions</h3>
+                                <div class="text-blue-500 dark:text-blue-400 bg-blue-500 bg-opacity-10 dark:bg-opacity-20 rounded-full h-10 w-10 flex items-center justify-center">
+                                    <i class="fas fa-chalkboard"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-end">
+                                <p class="text-3xl font-bold text-gray-900 dark:text-white">3</p>
+                                <p class="ml-2 text-sm text-green-500 flex items-center">
+                                    <i class="fas fa-arrow-up mr-1"></i>1
+                                </p>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">From last month</p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Monthly Visitors</h3>
+                                <div class="text-yellow-500 dark:text-yellow-400 bg-yellow-500 bg-opacity-10 dark:bg-opacity-20 rounded-full h-10 w-10 flex items-center justify-center">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-end">
+                                <p class="text-3xl font-bold text-gray-900 dark:text-white">8,549</p>
+                                <p class="ml-2 text-sm text-green-500 flex items-center">
+                                    <i class="fas fa-arrow-up mr-1"></i>18%
+                                </p>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">From last month</p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Revenue</h3>
+                                <div class="text-green-500 dark:text-green-400 bg-green-500 bg-opacity-10 dark:bg-opacity-20 rounded-full h-10 w-10 flex items-center justify-center">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-end">
+                                <p class="text-3xl font-bold text-gray-900 dark:text-white">$32,845</p>
+                                <p class="ml-2 text-sm text-red-500 flex items-center">
+                                    <i class="fas fa-arrow-down mr-1"></i>5%
+                                </p>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">From last month</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- Visitor Analytics Chart -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Visitor Analytics</h3>
+                                <div class="flex space-x-2">
+                                    <button class="chart-period-btn px-3 py-1 text-xs font-medium rounded-md bg-primary bg-opacity-10 text-primary" data-period="daily">Daily</button>
+                                    <button class="chart-period-btn px-3 py-1 text-xs font-medium rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" data-period="weekly">Weekly</button>
+                                    <button class="chart-period-btn px-3 py-1 text-xs font-medium rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" data-period="monthly">Monthly</button>
+                                </div>
+                            </div>
+                            <div class="h-64 flex items-end space-x-2">
+                                <div class="flex-1 bg-primary bg-opacity-20 dark:bg-opacity-40 rounded-t-md relative group hover:bg-opacity-30 dark:hover:bg-opacity-50 chart-bar" style="height: 20%;">
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2">
+                                        Mon: 120
+                                    </div>
+                                </div>
+                                <div class="flex-1 bg-primary bg-opacity-20 dark:bg-opacity-40 rounded-t-md relative group hover:bg-opacity-30 dark:hover:bg-opacity-50 chart-bar" style="height: 35%;">
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2">
+                                        Tue: 210
+                                    </div>
+                                </div>
+                                <div class="flex-1 bg-primary bg-opacity-20 dark:bg-opacity-40 rounded-t-md relative group hover:bg-opacity-30 dark:hover:bg-opacity-50 chart-bar" style="height: 30%;">
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2">
+                                        Wed: 180
+                                    </div>
+                                </div>
+                                <div class="flex-1 bg-primary bg-opacity-20 dark:bg-opacity-40 rounded-t-md relative group hover:bg-opacity-30 dark:hover:bg-opacity-50 chart-bar" style="height: 45%;">
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2">
+                                        Thu: 270
+                                    </div>
+                                </div>
+                                <div class="flex-1 bg-primary bg-opacity-20 dark:bg-opacity-40 rounded-t-md relative group hover:bg-opacity-30 dark:hover:bg-opacity-50 chart-bar" style="height: 60%;">
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2">
+                                        Fri: 360
+                                    </div>
+                                </div>
+                                <div class="flex-1 bg-primary bg-opacity-20 dark:bg-opacity-40 rounded-t-md relative group hover:bg-opacity-30 dark:hover:bg-opacity-50 chart-bar" style="height: 80%;">
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2">
+                                        Sat: 480
+                                    </div>
+                                </div>
+                                <div class="flex-1 bg-primary bg-opacity-20 dark:bg-opacity-40 rounded-t-md relative group hover:bg-opacity-30 dark:hover:bg-opacity-50 chart-bar" style="height: 45%;">
+                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded py-1 px-2">
+                                        Sun: 270
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                <div>Mon</div>
+                                <div>Tue</div>
+                                <div>Wed</div>
+                                <div>Thu</div>
+                                <div>Fri</div>
+                                <div>Sat</div>
+                                <div>Sun</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Collection Distribution Chart -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">Collection Distribution</h3>
+                                <button id="collection-chart-menu" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="flex flex-col items-center">
+                                    <!-- Simple donut chart simulation -->
+                                    <div class="h-32 w-32 rounded-full border-8 border-primary relative flex items-center justify-center">
+                                        <div class="h-24 w-24 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center">
+                                            <span class="text-xl font-bold text-gray-900 dark:text-white">35%</span>
+                                        </div>
+                                        <div class="absolute top-0 right-0 h-16 w-16 border-8 border-blue-500 rounded-full transform translate-x-1/4 -translate-y-1/4"></div>
+                                        <div class="absolute bottom-0 left-0 h-16 w-16 border-8 border-yellow-500 rounded-full transform -translate-x-1/4 translate-y-1/4"></div>
+                                    </div>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">By Artwork Count</p>
+                                </div>
+                                <!-- Legend -->
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full mr-2"></div>
+                                        <div class="flex justify-between w-full">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Modern Art</span>
+                                            <span class="text-sm text-gray-500 dark:text-gray-400">87 items</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                        <div class="flex justify-between w-full">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Renaissance</span>
+                                            <span class="text-sm text-gray-500 dark:text-gray-400">45 items</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                                        <div class="flex justify-between w-full">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Impressionism</span>
+                                            <span class="text-sm text-gray-500 dark:text-gray-400">63 items</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                        <div class="flex justify-between w-full">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Contemporary</span>
+                                            <span class="text-sm text-gray-500 dark:text-gray-400">32 items</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                                        <div class="flex justify-between w-full">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Photography</span>
+                                            <span class="text-sm text-gray-500 dark:text-gray-400">21 items</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity Table -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Recent Activity</h3>
+                            <button id="activity-refresh-btn" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Event</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Artwork</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">New Artwork Added</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">Sarah Johnson</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-primary">Urban Landscape #5</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            Today, 10:30 AM
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                Completed
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">Exhibition Updated</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">Michael Chen</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-primary">Spring Collection</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            Today, 9:15 AM
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                Completed
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">Artwork Status Change</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">Robert Martinez</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-primary">The Night Watch</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            Yesterday, 4:30 PM
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                                                In Progress
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">Comment Added</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">Emily Wilson</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-primary">Abstract Composition</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            Yesterday, 2:45 PM
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                Completed
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">New User Registered</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-white">Admin</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-primary">James Wilson</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            2 days ago
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                Completed
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Exhibitions Page -->
+            <div id="exhibitions-page" class="page inactive py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Exhibitions</h1>
+                        <div class="flex space-x-2">
+                            <button id="schedule-btn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <i class="fas fa-calendar-alt mr-2"></i>Schedule
+                            </button>
+                            <button id="new-exhibition-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90">
+                                <i class="fas fa-plus mr-2"></i>New Exhibition
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Current Exhibitions -->
+                    <h2 class="text-xl font-medium text-gray-900 dark:text-white mb-4">Current Exhibitions</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden exhibition-card" data-id="modern">
+                            <div class="h-48 bg-gray-200 dark:bg-gray-700 relative">
+                                <div class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                    <i class="fas fa-image text-4xl"></i>
+                                </div>
+                                <div class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                    Active
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Modern Masterpieces</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">April 15 - June 30, 2023</p>
+                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    <span>Main Gallery, East Wing</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex -space-x-2">
+                                            <div class="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs">JS</div>
+                                            <div class="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">MC</div>
+                                            <div class="h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">RW</div>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">3 curators</span>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 exhibition-menu-btn" data-id="modern">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden exhibition-card" data-id="renaissance">
+                            <div class="h-48 bg-gray-200 dark:bg-gray-700 relative">
+                                <div class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                    <i class="fas fa-image text-4xl"></i>
+                                </div>
+                                <div class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                    Active
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Renaissance Perspectives</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">March 1 - July 15, 2023</p>
+                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    <span>Historical Gallery, West Wing</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex -space-x-2">
+                                            <div class="h-6 w-6 rounded-full bg-yellow-500 text-white flex items-center justify-center text-xs">EW</div>
+                                            <div class="h-6 w-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs">AL</div>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">2 curators</span>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 exhibition-menu-btn" data-id="renaissance">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden exhibition-card" data-id="contemporary">
+                            <div class="h-48 bg-gray-200 dark:bg-gray-700 relative">
+                                <div class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                    <i class="fas fa-image text-4xl"></i>
+                                </div>
+                                <div class="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                    Active
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Contemporary Visions</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">May 10 - August 28, 2023</p>
+                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    <span>Modern Art Pavilion</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex -space-x-2">
+                                            <div class="h-6 w-6 rounded-full bg-pink-500 text-white flex items-center justify-center text-xs">LT</div>
+                                            <div class="h-6 w-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs">JB</div>
+                                            <div class="h-6 w-6 rounded-full bg-gray-500 text-white flex items-center justify-center text-xs">+2</div>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">4 curators</span>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 exhibition-menu-btn" data-id="contemporary">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Upcoming Exhibitions -->
+                    <h2 class="text-xl font-medium text-gray-900 dark:text-white mb-4">Upcoming Exhibitions</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden exhibition-card" data-id="impressionist">
+                            <div class="h-48 bg-gray-200 dark:bg-gray-700 relative">
+                                <div class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                    <i class="fas fa-image text-4xl"></i>
+                                </div>
+                                <div class="absolute top-3 right-3 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
+                                    Planning
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Impressionist Gardens</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">September 5 - December 15, 2023</p>
+                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    <span>Botanical Gallery</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex -space-x-2">
+                                            <div class="h-6 w-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">RW</div>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">1 curator</span>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 exhibition-menu-btn" data-id="impressionist">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden exhibition-card" data-id="digital">
+                            <div class="h-48 bg-gray-200 dark:bg-gray-700 relative">
+                                <div class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                    <i class="fas fa-image text-4xl"></i>
+                                </div>
+                                <div class="absolute top-3 right-3 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                    In Development
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Digital Frontiers</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">October 10 - January 15, 2024</p>
+                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    <span>Interactive Gallery</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex -space-x-2">
+                                            <div class="h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">MC</div>
+                                            <div class="h-6 w-6 rounded-full bg-pink-500 text-white flex items-center justify-center text-xs">LT</div>
+                                        </div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">2 curators</span>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 exhibition-menu-btn" data-id="digital">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Past Exhibitions -->
+                    <h2 class="text-xl font-medium text-gray-900 dark:text-white mb-4">Past Exhibitions</h2>
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                        <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <li class="px-6 py-4 flex flex-wrap md:flex-nowrap past-exhibition" data-id="abstract">
+                                <div class="md:w-64 md:mb-0 mb-4 flex-shrink-0 flex flex-col">
+                                    <span class="text-gray-900 dark:text-white font-medium">Abstract Expressions</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Jan 15 - Mar 20, 2023</span>
+                                </div>
+                                <div class="md:flex-grow">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                        Featured works by 12 contemporary abstract artists exploring emotion and form through color and texture.
+                                    </p>
+                                    <a href="#" class="text-primary text-sm archive-link" data-id="abstract">View Archive</a>
+                                </div>
+                                <div class="ml-auto text-gray-500 dark:text-gray-400 text-sm">
+                                    <i class="fas fa-eye mr-1"></i> 2,547 visitors
+                                </div>
+                            </li>
+                            <li class="px-6 py-4 flex flex-wrap md:flex-nowrap past-exhibition" data-id="portraits">
+                                <div class="md:w-64 md:mb-0 mb-4 flex-shrink-0 flex flex-col">
+                                    <span class="text-gray-900 dark:text-white font-medium">Portraits Through Time</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Oct 5 - Dec 18, 2022</span>
+                                </div>
+                                <div class="md:flex-grow">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                        A chronological journey through portraiture from Renaissance to present day.
+                                    </p>
+                                    <a href="#" class="text-primary text-sm archive-link" data-id="portraits">View Archive</a>
+                                </div>
+                                <div class="ml-auto text-gray-500 dark:text-gray-400 text-sm">
+                                    <i class="fas fa-eye mr-1"></i> 3,862 visitors
+                                </div>
+                            </li>
+                            <li class="px-6 py-4 flex flex-wrap md:flex-nowrap past-exhibition" data-id="light">
+                                <div class="md:w-64 md:mb-0 mb-4 flex-shrink-0 flex flex-col">
+                                    <span class="text-gray-900 dark:text-white font-medium">Light &amp; Shadow</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Jul 8 - Sep 25, 2022</span>
+                                </div>
+                                <div class="md:flex-grow">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                        Exploring the interplay of light and shadow in photography and painting across multiple eras.
+                                    </p>
+                                    <a href="#" class="text-primary text-sm archive-link" data-id="light">View Archive</a>
+                                </div>
+                                <div class="ml-auto text-gray-500 dark:text-gray-400 text-sm">
+                                    <i class="fas fa-eye mr-1"></i> 2,134 visitors
+                                </div>
+                            </li>
+                            <li class="px-6 py-4 flex flex-wrap md:flex-nowrap past-exhibition" data-id="urban">
+                                <div class="md:w-64 md:mb-0 mb-4 flex-shrink-0 flex flex-col">
+                                    <span class="text-gray-900 dark:text-white font-medium">Urban Landscapes</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Apr 12 - Jun 30, 2022</span>
+                                </div>
+                                <div class="md:flex-grow">
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                        City scenes from around the world, featuring paintings, photography, and mixed media pieces.
+                                    </p>
+                                    <a href="#" class="text-primary text-sm archive-link" data-id="urban">View Archive</a>
+                                </div>
+                                <div class="ml-auto text-gray-500 dark:text-gray-400 text-sm">
+                                    <i class="fas fa-eye mr-1"></i> 1,879 visitors
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- More Page -->
+            <div id="more-page" class="page inactive py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">More Options</h1>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Settings Card -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-5">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-cog text-xl"></i>
+                                    </div>
+                                    <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-white">Settings</h3>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Configure your dashboard preferences, notifications, and account settings.
+                                </p>
+                                <button id="open-settings-btn" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                                    Open Settings
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Users & Permissions Card -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-5">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-users text-xl"></i>
+                                    </div>
+                                    <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-white">Users &amp; Permissions</h3>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Manage team members, their roles, and access permissions for the gallery system.
+                                </p>
+                                <button id="manage-users-btn" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                                    Manage Users
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Reports Card -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-5">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-chart-pie text-xl"></i>
+                                    </div>
+                                    <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-white">Reports</h3>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Generate detailed reports on visitor statistics, company popularity, and sales data.
+                                </p>
+                                <button id="view-reports-btn" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                                    View Reports
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Import/Export Card -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-5">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-exchange-alt text-xl"></i>
+                                    </div>
+                                    <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-white">Import/Export</h3>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Import or export pictures ,videos,designs ,data, collections, and gallery information for backup or migration.
+                                </p>
+                                <button id="import-export-btn" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                                    Import/Export Data
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Integrations Card -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-5">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-plug text-xl"></i>
+                                    </div>
+                                    <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-white">Integrations</h3>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Connect with third-party services for email marketing, social media, and payment processing.
+                                </p>
+                                <button id="manage-integrations-btn" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                                    Manage Integrations
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Help & Support Card -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-5">
+                                <div class="flex items-center mb-4">
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                        <i class="fas fa-question-circle text-xl"></i>
+                                    </div>
+                                    <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-white">Help &amp; Support</h3>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Access documentation, tutorials, and contact support for assistance with the system.
+                                </p>
+                                <button id="get-help-btn" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                                    Get Help
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile menu button -->
+    <div class="fixed bottom-4 right-4 md:hidden">
+        <button id="mobile-menu-btn" class="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-opacity-90">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Sidebar -->
+    <div id="mobile-sidebar" class="fixed inset-0 z-20 transform -translate-x-full transition-transform duration-300 ease-in-out md:hidden">
+        <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" id="mobile-sidebar-backdrop"></div>
+        <div class="relative max-w-xs w-full h-full bg-white dark:bg-gray-800 shadow-xl flex flex-col">
+            <!-- Mobile sidebar content -->
+            <div class="px-4 pt-5 pb-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-primary flex items-center justify-center">
+                            <i class="fas fa-palette text-white"></i>
+                        </div>
+                        <div class="ml-3 text-xl font-bold text-gray-900 dark:text-white">Art Gallery</div>
+                    </div>
+                    <button id="close-sidebar-btn" class="text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <nav class="mt-5 flex-1 px-2 space-y-1">
+                    <a href="#" data-page="home" class="mobile-nav-link bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md">
+                        <i class="fas fa-home mr-3 text-primary"></i>
+                        Home
+                    </a>
+                    <a href="#" data-page="inbox" class="mobile-nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-base font-medium rounded-md">
+                        <i class="fas fa-inbox mr-3 text-gray-400 dark:text-gray-500"></i>
+                        Inbox
+                        <span class="bg-primary text-white ml-auto inline-block py-0.5 px-2 text-xs rounded-full">5</span>
+                    </a>
+                    <a href="#" data-page="documents" class="mobile-nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-base font-medium rounded-md">
+                        <i class="fas fa-file-alt mr-3 text-gray-400 dark:text-gray-500"></i>
+                        Documents
+                    </a>
+                    <a href="#" data-page="analytics" class="mobile-nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-base font-medium rounded-md">
+                        <i class="fas fa-chart-bar mr-3 text-gray-400 dark:text-gray-500"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" data-page="exhibitions" class="mobile-nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-base font-medium rounded-md">
+                        <i class="fas fa-chalkboard mr-3 text-gray-400 dark:text-gray-500"></i>
+                        Bookings
+                    </a>
+                    <a href="#" data-page="more" class="mobile-nav-link text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group flex items-center px-2 py-2 text-base font-medium rounded-md">
+                        <i class="fas fa-ellipsis-h mr-3 text-gray-400 dark:text-gray-500"></i>
+                        More
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Artwork Modal -->
+    <div id="artwork-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        
+        <div class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto transform scale-95">
+            <!-- Modal header -->
+            <div class="modal-header flex justify-between items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="modal-title">Add New pictures</h3>
+                <button class="modal-close cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Modal content -->
+            <div class="modal-content py-4 px-6">
+                <form id="artwork-form" class="space-y-4">
+                    <input type="hidden" id="artwork-id">
+                    <input type="hidden" id="artwork-status" value="featured">
+                    
+                    <div>
+                        <label for="artwork-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Artwork Title</label>
+                        <input type="text" id="artwork-title" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary text-base dark:bg-gray-700 dark:text-white" required="">
+                    </div>
+                    
+                    <div>
+                        <label for="artwork-artist" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Artist Name</label>
+                        <input type="text" id="artwork-artist" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary text-base dark:bg-gray-700 dark:text-white" required="">
+                    </div>
+                    
+                    <div>
+                        <label for="artwork-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+                        <input type="text" id="artwork-date" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary text-base dark:bg-gray-700 dark:text-white" placeholder="e.g. May 15, Tomorrow, Permanent">
+                    </div>
+                    
+                    <div>
+                        <label for="artwork-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                        <select id="artwork-priority" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary text-base dark:bg-gray-700 dark:text-white">
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Normal">Normal</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="artwork-collection" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Collection</label>
+                        <select id="artwork-collection" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary text-base dark:bg-gray-700 dark:text-white">
+                            <option value="Modern Art">PICTURES</option>
+                            <option value="Renaissance">GRAPHIC DESIGNS</option>
+                            <option value="Impressionism">DVD videos</option>
+                            <option value="Contemporary">Contemporary</option>
+                            <option value="Photography">Photography</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Modal footer -->
+            <div class="modal-footer flex justify-end px-6 py-3 border-t border-gray-200 dark:border-gray-700">
+                <button id="modal-cancel" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-md mr-2 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">
+                    Cancel
+                </button>
+                <button id="modal-save" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 focus:outline-none">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Menu Modal -->
+    <div id="action-menu" class="hidden absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+        <div class="py-1" role="menu" aria-orientation="vertical">
+            <button class="action-edit block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-edit mr-2"></i> Edit
+            </button>
+            <button class="action-move block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-arrow-right mr-2"></i> Move to...
+            </button>
+            <button class="action-delete block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-trash mr-2"></i> Delete
+            </button>
+        </div>
+    </div>
+
+    <!-- Move To Modal -->
+    <div id="move-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        
+        <div class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto transform scale-95">
+            <!-- Modal header -->
+            <div class="modal-header flex justify-between items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Move Artwork</h3>
+                <button class="move-modal-close cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Modal content -->
+            <div class="modal-content py-4 px-6">
+                <p class="text-gray-700 dark:text-gray-300 mb-4">Select a destination for <span id="move-artwork-title" class="font-semibold"></span>:</p>
+                <input type="hidden" id="move-artwork-id">
+                
+                <div class="space-y-2">
+                    <button class="move-to-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center" data-status="featured">
+                        <div class="w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center mr-2">
+                            <i class="fas fa-star text-xs text-white"></i>
+                        </div>
+                        <span>Featured</span>
+                    </button>
+                    
+                    <button class="move-to-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center" data-status="exhibition">
+                        <div class="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center mr-2">
+                            <i class="fas fa-spinner text-xs text-white"></i>
+                        </div>
+                        <span>Current Exhibition</span>
+                    </button>
+                    
+                    <button class="move-to-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center" data-status="review">
+                        <div class="w-4 h-4 rounded-full bg-yellow-600 flex items-center justify-center mr-2">
+                            <i class="fas fa-search text-xs text-white"></i>
+                        </div>
+                        <span>Under Review</span>
+                    </button>
+                    
+                    <button class="move-to-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center" data-status="upcoming">
+                        <div class="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center mr-2">
+                            <i class="fas fa-calendar-alt text-xs text-white"></i>
+                        </div>
+                        <span>Coming Soon</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="filter-modal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+        
+        <div class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto transform scale-95">
+            <!-- Modal header -->
+            <div class="modal-header flex justify-between items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Filter Artworks</h3>
+                <button class="filter-modal-close cursor-pointer text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Modal content -->
+            <div class="modal-content py-4 px-6">
+                <form id="filter-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Collections</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-collection h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="Modern Art" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Modern Pictures</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-collection h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="Renaissance" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Graphics designs</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-collection h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="Impressionism" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">DVD videos</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-collection h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="Contemporary" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Contemporary</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-collection h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="Photography" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Photography</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-priority h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="High" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">High</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-priority h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="Medium" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Medium</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-priority h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="Normal" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Normal</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="filter-priority h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" value="Urgent" checked="">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Urgent</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Modal footer -->
+            <div class="modal-footer flex justify-between px-6 py-3 border-t border-gray-200 dark:border-gray-700">
+                <button id="reset-filter-btn" class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                    Reset
+                </button>
+                <div>
+                    <button id="cancel-filter-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-md mr-2 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">
+                        Cancel
+                    </button>
+                    <button id="apply-filter-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 focus:outline-none">
+                        Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Menu -->
+    <div id="section-menu" class="hidden absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+        <div class="py-1" role="menu" aria-orientation="vertical">
+            <button class="section-rename block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-edit mr-2"></i> Rename Section
+            </button>
+            <button class="section-collapse block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-compress-alt mr-2"></i> Collapse Section
+            </button>
+            <button class="section-empty block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-trash-alt mr-2"></i> Empty Section
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div id="notification-panel" class="hidden fixed right-4 top-16 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg z-30 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-sm font-medium text-gray-900 dark:text-white">Notifications</h3>
+            <button id="mark-all-read-btn" class="text-xs text-primary hover:text-primary-dark">
+                Mark all as read
+            </button>
+        </div>
+        <div class="max-h-96 overflow-y-auto">
+            <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex unread">
+                    <div class="flex-shrink-0 mr-3 mt-1">
+                        <div class="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-500 dark:text-blue-300 flex items-center justify-center">
+                            <i class="fas fa-envelope text-sm"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-900 dark:text-white font-medium">New Message</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            You have a new message from John Doe
+                        </p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">5 minutes ago</p>
+                    </div>
+                </div>
+                <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex unread">
+                    <div class="flex-shrink-0 mr-3 mt-1">
+                        <div class="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 text-green-500 dark:text-green-300 flex items-center justify-center">
+                            <i class="fas fa-bell text-sm"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-900 dark:text-white font-medium">Reminder</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Exhibition opening in 2 hours
+                        </p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">1 hour ago</p>
+                    </div>
+                </div>
+                <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex unread">
+                    <div class="flex-shrink-0 mr-3 mt-1">
+                        <div class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-500 dark:text-yellow-300 flex items-center justify-center">
+                            <i class="fas fa-tasks text-sm"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-900 dark:text-white font-medium">Task Completed</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            "Update pictueres inventory" task completed
+                        </p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Yesterday</p>
+                    </div>
+                </div>
+                <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex">
+                    <div class="flex-shrink-0 mr-3 mt-1">
+                        <div class="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900 text-red-500 dark:text-red-300 flex items-center justify-center">
+                            <i class="fas fa-exclamation-circle text-sm"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-900 dark:text-white font-medium">System Alert</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            System maintenance scheduled for tonight
+                        </p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">2 days ago</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 py-2 border-t border-gray-200 dark:border-gray-700 text-center">
+            <a href="#" class="text-xs text-primary hover:text-primary-dark">View all notifications</a>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the art gallery dashboard
+            const ArtGallery = {
+                artworks: [],
+                currentFilter: 'all',
+                actionTargetId: null,
+                currentPage: 'home',
+                isDarkMode: document.documentElement.classList.contains('dark'),
+                viewMode: 'list', // 'list' or 'grid'
+                activeFilters: {
+                    collections: ['Modern Art', 'Renaissance', 'Impressionism', 'Contemporary', 'Photography'],
+                    priorities: ['High', 'Medium', 'Normal', 'Urgent']
+                },
+                
+                init() {
+                    this.loadSampleData();
+                    this.renderArtworks();
+                    this.setupEventListeners();
+                    this.setupNavigationListeners();
+                    this.setupThemeToggle();
+                    this.setupDropdowns();
+                    this.updateDarkModeToggle();
+                },
+                
+                loadSampleData() {
+                    const sampleArtworks = [
+                        { id: 1, title: 'The Starry Night', artist: 'Vincent van Gogh', date: 'Permanent', priority: 'High', status: 'featured', collection: 'Impressionism' },
+                        { id: 2, title: 'Mona Lisa', artist: 'Leonardo da Vinci', date: 'Permanent', priority: 'High', status: 'featured', collection: 'Renaissance' },
+                        { id: 3, title: 'The Persistence of Memory', artist: 'Salvador Dalí', date: 'Permanent', priority: 'High', status: 'featured', collection: 'Modern Art' },
+                        { id: 4, title: 'Water Lilies', artist: 'Claude Monet', date: 'June 30', priority: 'Medium', status: 'exhibition', collection: 'Impressionism' },
+                        { id: 5, title: 'The Night Watch', artist: 'Rembrandt', date: 'May 15', priority: 'Medium', status: 'exhibition', collection: 'Renaissance' },
+                        { id: 6, title: 'Abstract Composition', artist: 'Wassily Kandinsky', date: 'Tomorrow', priority: 'Normal', status: 'review', collection: 'Modern Art' },
+                        { id: 7, title: 'Guernica', artist: 'Pablo Picasso', date: 'May 10', priority: 'Normal', status: 'review', collection: 'Modern Art' },
+                        { id: 8, title: 'American Gothic', artist: 'Grant Wood', date: 'Next week', priority: 'Urgent', status: 'upcoming', collection: 'Contemporary' }
+                    ];
+                    
+                    this.artworks = sampleArtworks;
+                },
+
+                // Set up navigation between pages
+                setupNavigationListeners() {
+                    // Desktop navigation
+                    const navLinks = document.querySelectorAll('.nav-link');
+                    navLinks.forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const page = e.currentTarget.dataset.page;
+                            this.navigateTo(page);
+                        });
+                    });
+
+                    // Mobile navigation
+                    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+                    mobileNavLinks.forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const page = e.currentTarget.dataset.page;
+                            this.navigateTo(page);
+                            this.closeMobileSidebar();
+                        });
+                    });
+                },
+
+                navigateTo(pageName) {
+                    // Close any open panels or dropdowns
+                    this.closeNotificationPanel();
+                    
+                    // Update current page
+                    this.currentPage = pageName;
+                    
+                    // Hide all pages
+                    const pages = document.querySelectorAll('.page');
+                    pages.forEach(page => {
+                        page.classList.remove('active');
+                        page.classList.add('inactive');
+                    });
+                    
+                    // Show the selected page
+                    const activePage = document.getElementById(`${pageName}-page`);
+                    if (activePage) {
+                        activePage.classList.remove('inactive');
+                        activePage.classList.add('active');
+                    }
+                    
+                    // Update navigation highlights in desktop menu
+                    const navLinks = document.querySelectorAll('.nav-link');
+                    navLinks.forEach(link => {
+                        if (link.dataset.page === pageName) {
+                            link.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white');
+                            link.classList.remove('text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+                        } else {
+                            link.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white');
+                            link.classList.add('text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+                        }
+                    });
+                    
+                    // Update navigation highlights in mobile menu
+                    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+                    mobileNavLinks.forEach(link => {
+                        if (link.dataset.page === pageName) {
+                            link.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white');
+                            link.classList.remove('text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+                        } else {
+                            link.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-900', 'dark:text-white');
+                            link.classList.add('text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+                        }
+                    });
+
+                    // If we're on the home page, make sure the artworks are rendered
+                    if (pageName === 'home') {
+                        this.renderArtworks();
+                    }
+
+                    // Show a toast notification for page change
+                    this.showToast(`Navigated to ${this.getPageDisplayName(pageName)}`);
+                },
+
+                getPageDisplayName(pageName) {
+                    const pageNames = {
+                        'home': 'Home',
+                        'inbox': 'Inbox',
+                        'documents': 'Documents',
+                        'analytics': 'Dashboard',
+                        'exhibitions': 'Exhibitions',
+                        'more': 'More Options'
+                    };
+                    return pageNames[pageName] || pageName;
+                },
+                
+                renderArtworks() {
+                    // Check if we need to render in grid mode or list mode
+                    const isList = this.viewMode === 'list';
+                    
+                    const sections = document.querySelectorAll('.artwork-section');
+                    
+                    sections.forEach(section => {
+                        const status = section.dataset.status;
+                        const artworkList = section.querySelector('.artwork-list');
+                        const categoryCount = section.querySelector('.category-count');
+                        
+                        // Filter artworks by status, active collection filter, and other active filters
+                        const filteredArtworks = this.artworks.filter(artwork => {
+                            return artwork.status === status && 
+                                (this.currentFilter === 'all' || artwork.collection === this.currentFilter) &&
+                                this.activeFilters.collections.includes(artwork.collection) &&
+                                this.activeFilters.priorities.includes(artwork.priority);
+                        });
+                        
+                        // Update count
+                        categoryCount.textContent = filteredArtworks.length;
+                        
+                        // Clear existing list
+                        artworkList.innerHTML = '';
+                        
+                        // Add artwork items
+                        if (filteredArtworks.length === 0) {
+                            artworkList.innerHTML = `
+                                <li class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                    No artworks to display
+                                </li>
+                            `;
+                        } else {
+                            // Determine if we're rendering in list or grid mode
+                            if (isList) {
+                                // List mode
+                                artworkList.className = "divide-y divide-gray-200 dark:divide-gray-700 artwork-list";
+                                
+                                filteredArtworks.forEach(artwork => {
+                                    const priorityClass = this.getPriorityClass(artwork.priority);
+                                    
+                                    const item = document.createElement('li');
+                                    item.className = 'px-6 py-4 flex items-center';
+                                    item.dataset.id = artwork.id;
+                                    
+                                    item.innerHTML = `
+                                        <div class="min-w-0 flex-1 flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                                <i class="fas fa-image text-gray-500 dark:text-gray-400"></i>
+                                            </div>
+                                            <div class="min-w-0 flex-1 px-4">
+                                                <div class="text-sm font-medium text-primary truncate">${artwork.title}</div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">${artwork.artist}</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">${artwork.date}</div>
+                                            <div class="flex items-center">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${priorityClass}">
+                                                    ${artwork.priority}
+                                                </span>
+                                            </div>
+                                            <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 action-menu-btn" data-id="${artwork.id}">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                        </div>
+                                    `;
+                                    
+                                    artworkList.appendChild(item);
+                                });
+                            } else {
+                                // Grid mode
+                                artworkList.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 artwork-list";
+                                
+                                filteredArtworks.forEach(artwork => {
+                                    const priorityClass = this.getPriorityClass(artwork.priority);
+                                    
+                                    const item = document.createElement('div');
+                                    item.className = 'bg-white dark:bg-gray-700 rounded-lg shadow-sm overflow-hidden';
+                                    item.dataset.id = artwork.id;
+                                    
+                                    item.innerHTML = `
+                                        <div class="p-4">
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex-shrink-0 h-16 w-16 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center mr-4">
+                                                    <i class="fas fa-image text-gray-500 dark:text-gray-400 text-2xl"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h3 class="text-sm font-medium text-primary mb-1 truncate">${artwork.title}</h3>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${artwork.artist}</p>
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">${artwork.date}</span>
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${priorityClass}">
+                                                            ${artwork.priority}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 action-menu-btn ml-2" data-id="${artwork.id}">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    
+                                    artworkList.appendChild(item);
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Attach action menu event listeners
+                    this.setupActionMenuListeners();
+                },
+                
+                getPriorityClass(priority) {
+                    switch(priority) {
+                        case 'High':
+                            return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200';
+                        case 'Medium':
+                            return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+                        case 'Urgent':
+                            return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
+                        default:
+                            return 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200';
+                    }
+                },
+                
+                setupThemeToggle() {
+                    const themeToggle = document.getElementById('theme-toggle');
+                    
+                    // Set initial state based on current mode
+                    themeToggle.checked = this.isDarkMode;
+                    
+                    // Add event listener
+                    themeToggle.addEventListener('change', () => {
+                        if (themeToggle.checked) {
+                            document.documentElement.classList.add('dark');
+                            this.isDarkMode = true;
+                        } else {
+                            document.documentElement.classList.remove('dark');
+                            this.isDarkMode = false;
+                        }
+                        this.showToast(themeToggle.checked ? 'Dark mode enabled' : 'Light mode enabled');
+                    });
+                    
+                    // Also listen for system preference changes
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                        this.isDarkMode = e.matches;
+                        this.updateDarkModeToggle();
+                    });
+                },
+                
+                updateDarkModeToggle() {
+                    const themeToggle = document.getElementById('theme-toggle');
+                    themeToggle.checked = this.isDarkMode;
+                },
+                
+                setupDropdowns() {
+                    // Date range dropdown in Analytics page
+                    const dateRangeBtn = document.getElementById('date-range-btn');
+                    const dateRangeDropdown = document.getElementById('date-range-dropdown');
+                    
+                    if (dateRangeBtn) {
+                        dateRangeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            dateRangeDropdown.classList.toggle('hidden');
+                        });
+                    }
+                    
+                    // Date range options
+                    const dateRangeOptions = document.querySelectorAll('.date-range-option');
+                    dateRangeOptions.forEach(option => {
+                        option.addEventListener('click', (e) => {
+                            const range = e.currentTarget.dataset.range;
+                            const rangeText = e.currentTarget.textContent;
+                            
+                            // Update button text
+                            dateRangeBtn.innerHTML = `
+                                <i class="fas fa-calendar-alt mr-2"></i>${rangeText}
+                                <i class="fas fa-chevron-down ml-2"></i>
+                            `;
+                            
+                            // Hide dropdown
+                            dateRangeDropdown.classList.add('hidden');
+                            
+                            // Show toast
+                            this.showToast(`Date range updated to: ${rangeText}`);
+                        });
+                    });
+                    
+                    // Notification panel
+                    const notificationBtn = document.getElementById('notification-btn');
+                    const notificationPanel = document.getElementById('notification-panel');
+                    
+                    if (notificationBtn) {
+                        notificationBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            notificationPanel.classList.toggle('hidden');
+                        });
+                    }
+                    
+                    // Close dropdowns when clicking elsewhere
+                    document.addEventListener('click', () => {
+                        if (dateRangeDropdown) dateRangeDropdown.classList.add('hidden');
+                        if (notificationPanel) notificationPanel.classList.add('hidden');
+                    });
+                    
+                    // Mark all notifications as read
+                    const markAllReadBtn = document.getElementById('mark-all-read-btn');
+                    if (markAllReadBtn) {
+                        markAllReadBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const unreadNotifications = document.querySelectorAll('.unread');
+                            unreadNotifications.forEach(notification => {
+                                notification.classList.remove('unread');
+                            });
+                            
+                            // Update notification count
+                            const notificationBadge = notificationBtn.querySelector('span');
+                            notificationBadge.textContent = '0';
+                            
+                            // Show toast
+                            this.showToast('All notifications marked as read');
+                        });
+                    }
+                    
+                    // Chart period buttons in Analytics page
+                    const chartPeriodBtns = document.querySelectorAll('.chart-period-btn');
+                    chartPeriodBtns.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            // Remove active class from all buttons
+                            chartPeriodBtns.forEach(b => {
+                                b.classList.remove('bg-primary', 'bg-opacity-10', 'text-primary');
+                                b.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:bg-gray-100', 'dark:hover:bg-gray-700');
+                            });
+                            
+                            // Add active class to clicked button
+                            e.currentTarget.classList.add('bg-primary', 'bg-opacity-10', 'text-primary');
+                            e.currentTarget.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:bg-gray-100', 'dark:hover:bg-gray-700');
+                            
+                            // Update chart for demo purposes - random heights
+                            const chartBars = document.querySelectorAll('.chart-bar');
+                            chartBars.forEach(bar => {
+                                const randomHeight = Math.floor(Math.random() * 80) + 10; // 10% to 90%
+                                bar.style.height = `${randomHeight}%`;
+                            });
+                            
+                            // Show toast
+                            const period = e.currentTarget.dataset.period;
+                            this.showToast(`Chart period updated to: ${period}`);
+                        });
+                    });
+                    
+                    // Inbox filters
+                    const inboxFilters = document.querySelectorAll('.inbox-filter');
+                    inboxFilters.forEach(filter => {
+                        filter.addEventListener('click', (e) => {
+                            // Remove active class from all filters
+                            inboxFilters.forEach(f => {
+                                f.classList.remove('text-gray-700', 'dark:text-gray-300', 'font-medium');
+                                f.classList.add('text-gray-500', 'dark:text-gray-400');
+                            });
+                            
+                            // Add active class to clicked filter
+                            e.currentTarget.classList.add('text-gray-700', 'dark:text-gray-300', 'font-medium');
+                            e.currentTarget.classList.remove('text-gray-500', 'dark:text-gray-400');
+                            
+                            // Show toast
+                            const filterType = e.currentTarget.dataset.filter;
+                            this.showToast(`Inbox filtered by: ${filterType}`);
+                        });
+                    });
+                },
+                
+                closeNotificationPanel() {
+                    const notificationPanel = document.getElementById('notification-panel');
+                    if (notificationPanel) notificationPanel.classList.add('hidden');
+                },
+                
+                setupEventListeners() {
+                    // View toggle buttons (list/grid)
+                    const listViewBtn = document.getElementById('list-view-btn');
+                    const gridViewBtn = document.getElementById('grid-view-btn');
+                    
+                    if (listViewBtn && gridViewBtn) {
+                        listViewBtn.addEventListener('click', () => {
+                            this.viewMode = 'list';
+                            this.renderArtworks();
+                            
+                            // Update active class
+                            listViewBtn.classList.add('active');
+                            gridViewBtn.classList.remove('active');
+                            
+                            this.showToast('Switched to list view');
+                        });
+                        
+                        gridViewBtn.addEventListener('click', () => {
+                            this.viewMode = 'grid';
+                            this.renderArtworks();
+                            
+                            // Update active class
+                            gridViewBtn.classList.add('active');
+                            listViewBtn.classList.remove('active');
+                            
+                            this.showToast('Switched to grid view');
+                        });
+                    }
+                    
+                    // Add new artwork button
+                    const addButtons = document.querySelectorAll('#add-artwork-btn, #add-artwork-btn-2');
+                    addButtons.forEach(btn => {
+                        btn.addEventListener('click', () => this.openAddArtworkModal());
+                    });
+                    
+                    // Add to section buttons
+                    const addToSectionButtons = document.querySelectorAll('.add-to-section');
+                    addToSectionButtons.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const status = e.currentTarget.dataset.status;
+                            this.openAddArtworkModal(status);
+                        });
+                    });
+                    
+                    // Modal close buttons
+                    document.querySelector('.modal-close').addEventListener('click', () => this.closeModal('artwork-modal'));
+                    document.querySelector('.move-modal-close').addEventListener('click', () => this.closeModal('move-modal'));
+                    
+                    // Modal overlay click to close
+                    document.querySelector('.modal-overlay').addEventListener('click', () => this.closeModal('artwork-modal'));
+                    document.querySelectorAll('.modal-overlay')[1].addEventListener('click', () => this.closeModal('move-modal'));
+                    
+                    // Cancel button
+                    document.getElementById('modal-cancel').addEventListener('click', () => this.closeModal('artwork-modal'));
+                    
+                    // Save button
+                    document.getElementById('modal-save').addEventListener('click', () => this.saveArtwork());
+                    
+                    // Move to buttons
+                    const moveToButtons = document.querySelectorAll('.move-to-btn');
+                    moveToButtons.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const newStatus = e.currentTarget.dataset.status;
+                            this.moveArtwork(this.actionTargetId, newStatus);
+                        });
+                    });
+                    
+                    // Search input
+                    document.getElementById('search-input').addEventListener('input', (e) => {
+                        this.searchArtworks(e.target.value);
+                    });
+                    
+                    // Collection filters
+                    const collectionFilters = document.querySelectorAll('.collection-filter');
+                    collectionFilters.forEach(filter => {
+                        filter.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.currentFilter = e.currentTarget.dataset.collection;
+                            this.renderArtworks();
+                            
+                            // Show toast notification
+                            this.showToast(`Filtered by ${this.currentFilter === 'all' ? 'All Collections' : this.currentFilter}`);
+                        });
+                    });
+                    
+                    // Mobile menu
+                    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                        document.getElementById('mobile-sidebar').classList.remove('-translate-x-full');
+                        document.getElementById('mobile-sidebar').classList.add('translate-x-0');
+                    });
+                    
+                    document.getElementById('close-sidebar-btn').addEventListener('click', () => {
+                        this.closeMobileSidebar();
+                    });
+                    
+                    document.getElementById('mobile-sidebar-backdrop').addEventListener('click', () => {
+                        this.closeMobileSidebar();
+                    });
+                    
+                    // Filter button
+                    const filterBtn = document.getElementById('filter-btn');
+                    const filterModal = document.getElementById('filter-modal');
+                    const filterModalClose = document.querySelector('.filter-modal-close');
+                    const cancelFilterBtn = document.getElementById('cancel-filter-btn');
+                    const applyFilterBtn = document.getElementById('apply-filter-btn');
+                    const resetFilterBtn = document.getElementById('reset-filter-btn');
+                    
+                    if (filterBtn) {
+                        filterBtn.addEventListener('click', () => {
+                            this.openModal('filter-modal');
+                        });
+                    }
+                    
+                    if (filterModalClose) {
+                        filterModalClose.addEventListener('click', () => {
+                            this.closeModal('filter-modal');
+                        });
+                    }
+                    
+                    if (cancelFilterBtn) {
+                        cancelFilterBtn.addEventListener('click', () => {
+                            this.closeModal('filter-modal');
+                        });
+                    }
+                    
+                    if (applyFilterBtn) {
+                        applyFilterBtn.addEventListener('click', () => {
+                            // Get selected collections
+                            const selectedCollections = [];
+                            document.querySelectorAll('.filter-collection:checked').forEach(checkbox => {
+                                selectedCollections.push(checkbox.value);
+                            });
+                            
+                            // Get selected priorities
+                            const selectedPriorities = [];
+                            document.querySelectorAll('.filter-priority:checked').forEach(checkbox => {
+                                selectedPriorities.push(checkbox.value);
+                            });
+                            
+                            // Update active filters
+                            this.activeFilters.collections = selectedCollections;
+                            this.activeFilters.priorities = selectedPriorities;
+                            
+                            // Render artworks with new filters
+                            this.renderArtworks();
+                            
+                            // Close modal
+                            this.closeModal('filter-modal');
+                            
+                            // Show toast
+                            this.showToast('Filters applied');
+                        });
+                    }
+                    
+                    if (resetFilterBtn) {
+                        resetFilterBtn.addEventListener('click', () => {
+                            // Reset checkboxes
+                            document.querySelectorAll('.filter-collection, .filter-priority').forEach(checkbox => {
+                                checkbox.checked = true;
+                            });
+                            
+                            // Reset active filters
+                            this.activeFilters.collections = ['Modern Art', 'Renaissance', 'Impressionism', 'Contemporary', 'Photography'];
+                            this.activeFilters.priorities = ['High', 'Medium', 'Normal', 'Urgent'];
+                            
+                            // Render artworks with reset filters
+                            this.renderArtworks();
+                            
+                            // Show toast
+                            this.showToast('Filters reset');
+                        });
+                    }
+                    
+                    // Section menu buttons
+                    const sectionMenuBtns = document.querySelectorAll('.section-menu-btn');
+                    sectionMenuBtns.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const section = e.currentTarget.dataset.section;
+                            this.showSectionMenu(e.currentTarget, section);
+                        });
+                    });
+                    
+                    // Profile button
+                    const viewProfileBtn = document.getElementById('view-profile-btn');
+                    if (viewProfileBtn) {
+                        viewProfileBtn.addEventListener('click', () => {
+                            this.showToast('Profile view not implemented in this demo');
+                        });
+                    }
+                    
+                    // Settings button
+                    const settingsBtn = document.getElementById('settings-btn');
+                    if (settingsBtn) {
+                        settingsBtn.addEventListener('click', () => {
+                            this.showToast('Settings not implemented in this demo');
+                        });
+                    }
+                    
+                    // Various other buttons in the "More" page
+                    const actionButtons = [
+                        'open-settings-btn', 'manage-users-btn', 'view-reports-btn', 
+                        'import-export-btn', 'manage-integrations-btn', 'get-help-btn'
+                    ];
+                    
+                    actionButtons.forEach(btnId => {
+                        const btn = document.getElementById(btnId);
+                        if (btn) {
+                            btn.addEventListener('click', () => {
+                                this.showToast(`${btn.textContent.trim()} action not implemented in this demo`);
+                            });
+                        }
+                    });
+                    
+                    // Exhibition card menu buttons
+                    const exhibitionMenuBtns = document.querySelectorAll('.exhibition-menu-btn');
+                    exhibitionMenuBtns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            this.showToast('Exhibition menu not implemented in this demo');
+                        });
+                    });
+                    
+                    // Archive links for past exhibitions
+                    const archiveLinks = document.querySelectorAll('.archive-link');
+                    archiveLinks.forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const id = e.currentTarget.dataset.id;
+                            this.showToast(`Archive for "${id}" not implemented in this demo`);
+                        });
+                    });
+                    
+                    // Folder and file items in Documents page
+                    const folderItems = document.querySelectorAll('.folder-item');
+                    folderItems.forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            const folder = e.currentTarget.dataset.folder;
+                            this.showToast(`Opening folder: ${folder}`);
+                        });
+                    });
+                    
+                    const fileItems = document.querySelectorAll('.file-item');
+                    fileItems.forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            const file = e.currentTarget.dataset.file;
+                            this.showToast(`Opening file: ${file}`);
+                        });
+                    });
+                    
+                    // File menu buttons
+                    const fileMenuBtns = document.querySelectorAll('.file-menu-btn');
+                    fileMenuBtns.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.showToast('File menu not implemented in this demo');
+                        });
+                    });
+                    
+                    // Analytics page buttons
+                    const exportBtn = document.getElementById('export-btn');
+                    if (exportBtn) {
+                        exportBtn.addEventListener('click', () => {
+                            this.showToast('Export functionality not implemented in this demo');
+                        });
+                    }
+                    
+                    const activityRefreshBtn = document.getElementById('activity-refresh-btn');
+                    if (activityRefreshBtn) {
+                        activityRefreshBtn.addEventListener('click', () => {
+                            this.showToast('Activity data refreshed');
+                        });
+                    }
+                    
+                    const collectionChartMenu = document.getElementById('collection-chart-menu');
+                    if (collectionChartMenu) {
+                        collectionChartMenu.addEventListener('click', () => {
+                            this.showToast('Chart menu not implemented in this demo');
+                        });
+                    }
+                    
+                    // Exhibitions page buttons
+                    const scheduleBtn = document.getElementById('schedule-btn');
+                    if (scheduleBtn) {
+                        scheduleBtn.addEventListener('click', () => {
+                            this.showToast('Schedule view not implemented in this demo');
+                        });
+                    }
+                    
+                    const newExhibitionBtn = document.getElementById('new-exhibition-btn');
+                    if (newExhibitionBtn) {
+                        newExhibitionBtn.addEventListener('click', () => {
+                            this.showToast('New exhibition form not implemented in this demo');
+                        });
+                    }
+                    
+                    // Inbox page buttons
+                    const archiveBtn = document.getElementById('archive-btn');
+                    if (archiveBtn) {
+                        archiveBtn.addEventListener('click', () => {
+                            this.showToast('Archive functionality not implemented in this demo');
+                        });
+                    }
+                    
+                    const composeBtn = document.getElementById('compose-btn');
+                    if (composeBtn) {
+                        composeBtn.addEventListener('click', () => {
+                            this.showToast('Compose message not implemented in this demo');
+                        });
+                    }
+                    
+                    const inboxMenuBtn = document.getElementById('inbox-menu-btn');
+                    if (inboxMenuBtn) {
+                        inboxMenuBtn.addEventListener('click', () => {
+                            this.showToast('Inbox menu not implemented in this demo');
+                        });
+                    }
+                    
+                    // Documents page buttons
+                    const newFolderBtn = document.getElementById('new-folder-btn');
+                    if (newFolderBtn) {
+                        newFolderBtn.addEventListener('click', () => {
+                            this.showToast('New folder creation not implemented in this demo');
+                        });
+                    }
+                    
+                    const uploadBtn = document.getElementById('upload-btn');
+                    if (uploadBtn) {
+                        uploadBtn.addEventListener('click', () => {
+                            this.showToast('Upload functionality not implemented in this demo');
+                        });
+                    }
+                    
+                    const docsBreadcrumbs = document.querySelectorAll('.docs-breadcrumb');
+                    docsBreadcrumbs.forEach(crumb => {
+                        crumb.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const path = e.currentTarget.dataset.path;
+                            this.showToast(`Navigating to: ${path}`);
+                        });
+                    });
+                },
+
+                showSectionMenu(target, section) {
+                    const sectionMenu = document.getElementById('section-menu');
+                    const rect = target.getBoundingClientRect();
+                    
+                    sectionMenu.style.top = `${rect.bottom + window.scrollY}px`;
+                    sectionMenu.style.left = `${rect.left - 120 + window.scrollX}px`;
+                    
+                    sectionMenu.classList.remove('hidden');
+                    
+                    // Setup menu items
+                    const renameBtn = sectionMenu.querySelector('.section-rename');
+                    const collapseBtn = sectionMenu.querySelector('.section-collapse');
+                    const emptyBtn = sectionMenu.querySelector('.section-empty');
+                    
+                    renameBtn.onclick = () => {
+                        this.showToast(`Rename section: ${section} (not implemented in demo)`);
+                        sectionMenu.classList.add('hidden');
+                    };
+                    
+                    collapseBtn.onclick = () => {
+                        const sectionEl = document.querySelector(`.artwork-section[data-status="${section}"]`);
+                        const listEl = sectionEl.querySelector('.artwork-list');
+                        
+                        if (listEl.style.display === 'none') {
+                            listEl.style.display = '';
+                            collapseBtn.innerHTML = '<i class="fas fa-compress-alt mr-2"></i> Collapse Section';
+                            this.showToast(`Expanded section: ${section}`);
+                        } else {
+                            listEl.style.display = 'none';
+                            collapseBtn.innerHTML = '<i class="fas fa-expand-alt mr-2"></i> Expand Section';
+                            this.showToast(`Collapsed section: ${section}`);
+                        }
+                        
+                        sectionMenu.classList.add('hidden');
+                    };
+                    
+                    emptyBtn.onclick = () => {
+                        // Filter out artworks from this section
+                        this.artworks = this.artworks.filter(a => a.status !== section);
+                        this.renderArtworks();
+                        this.showToast(`Emptied section: ${section}`);
+                        sectionMenu.classList.add('hidden');
+                    };
+                    
+                    // Close section menu when clicking elsewhere
+                    document.addEventListener('click', () => {
+                        sectionMenu.classList.add('hidden');
+                    }, { once: true });
+                },
+                
+                setupActionMenuListeners() {
+                    // Action menu buttons
+                    const actionButtons = document.querySelectorAll('.action-menu-btn');
+                    actionButtons.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const artworkId = parseInt(e.currentTarget.dataset.id);
+                            this.toggleActionMenu(e.currentTarget, artworkId);
+                        });
+                    });
+                    
+                    // Close action menu when clicking elsewhere
+                    document.addEventListener('click', () => {
+                        this.closeActionMenu();
+                    });
+                },
+                
+                toggleActionMenu(target, artworkId) {
+                    this.actionTargetId = artworkId;
+                    
+                    const actionMenu = document.getElementById('action-menu');
+                    const rect = target.getBoundingClientRect();
+                    
+                    actionMenu.style.top = `${rect.bottom + window.scrollY}px`;
+                    actionMenu.style.left = `${rect.left - 120 + window.scrollX}px`;
+                    
+                    if (actionMenu.classList.contains('hidden')) {
+                        // Close any other open menus
+                        this.closeActionMenu();
+                        
+                        // Open this menu
+                        actionMenu.classList.remove('hidden');
+                        
+                        // Setup action buttons
+                        const editBtn = actionMenu.querySelector('.action-edit');
+                        const moveBtn = actionMenu.querySelector('.action-move');
+                        const deleteBtn = actionMenu.querySelector('.action-delete');
+                        
+                        editBtn.onclick = () => {
+                            this.editArtwork(artworkId);
+                            this.closeActionMenu();
+                        };
+                        
+                        moveBtn.onclick = () => {
+                            this.openMoveModal(artworkId);
+                            this.closeActionMenu();
+                        };
+                        
+                        deleteBtn.onclick = () => {
+                            this.deleteArtwork(artworkId);
+                            this.closeActionMenu();
+                        };
+                    } else {
+                        this.closeActionMenu();
+                    }
+                },
+                
+                closeActionMenu() {
+                    const actionMenu = document.getElementById('action-menu');
+                    actionMenu.classList.add('hidden');
+                },
+                
+                openAddArtworkModal(status = 'featured') {
+                    document.getElementById('modal-title').textContent = 'Add New Artwork';
+                    document.getElementById('artwork-id').value = '';
+                    document.getElementById('artwork-title').value = '';
+                    document.getElementById('artwork-artist').value = '';
+                    document.getElementById('artwork-date').value = '';
+                    document.getElementById('artwork-priority').value = 'Normal';
+                    document.getElementById('artwork-collection').value = 'Modern Art';
+                    document.getElementById('artwork-status').value = status;
+                    
+                    this.openModal('artwork-modal');
+                },
+                
+                openModal(modalId) {
+                    const modal = document.getElementById(modalId);
+                    modal.classList.add('active');
+                    modal.classList.remove('opacity-0', 'pointer-events-none');
+                    modal.querySelector('.modal-container').classList.remove('scale-95');
+                    modal.querySelector('.modal-container').classList.add('scale-100');
+                },
+                
+                closeModal(modalId) {
+                    const modal = document.getElementById(modalId);
+                    modal.classList.remove('active');
+                    modal.classList.add('opacity-0', 'pointer-events-none');
+                    modal.querySelector('.modal-container').classList.remove('scale-100');
+                    modal.querySelector('.modal-container').classList.add('scale-95');
+                },
+                
+                saveArtwork() {
+                    const artworkId = document.getElementById('artwork-id').value;
+                    const title = document.getElementById('artwork-title').value;
+                    const artist = document.getElementById('artwork-artist').value;
+                    const date = document.getElementById('artwork-date').value;
+                    const priority = document.getElementById('artwork-priority').value;
+                    const status = document.getElementById('artwork-status').value;
+                    const collection = document.getElementById('artwork-collection').value;
+                    
+                    if (!title || !artist) {
+                        alert('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    if (artworkId) {
+                        // Edit existing artwork
+                        const index = this.artworks.findIndex(a => a.id === parseInt(artworkId));
+                        if (index !== -1) {
+                            this.artworks[index] = {
+                                ...this.artworks[index],
+                                title,
+                                artist,
+                                date,
+                                priority,
+                                collection
+                            };
+                            this.showToast('Artwork updated successfully');
+                        }
+                    } else {
+                        // Add new artwork
+                        const newId = this.artworks.length > 0 ? Math.max(...this.artworks.map(a => a.id)) + 1 : 1;
+                        this.artworks.push({
+                            id: newId,
+                            title,
+                            artist,
+                            date,
+                            priority,
+                            status,
+                            collection
+                        });
+                        this.showToast('New artwork added successfully');
+                    }
+                    
+                    this.renderArtworks();
+                    this.closeModal('artwork-modal');
+                },
+                
+                editArtwork(artworkId) {
+                    const artwork = this.artworks.find(a => a.id === artworkId);
+                    
+                    if (!artwork) return;
+                    
+                    document.getElementById('modal-title').textContent = 'Edit Artwork';
+                    document.getElementById('artwork-id').value = artwork.id;
+                    document.getElementById('artwork-title').value = artwork.title;
+                    document.getElementById('artwork-artist').value = artwork.artist;
+                    document.getElementById('artwork-date').value = artwork.date;
+                    document.getElementById('artwork-priority').value = artwork.priority;
+                    document.getElementById('artwork-collection').value = artwork.collection;
+                    document.getElementById('artwork-status').value = artwork.status;
+                    
+                    this.openModal('artwork-modal');
+                },
+                
+                deleteArtwork(artworkId) {
+                    const index = this.artworks.findIndex(a => a.id === artworkId);
+                    
+                    if (index !== -1) {
+                        const artwork = this.artworks[index];
+                        this.artworks.splice(index, 1);
+                        this.renderArtworks();
+                        this.showToast(`"${artwork.title}" was deleted`);
+                    }
+                },
+                
+                openMoveModal(artworkId) {
+                    const artwork = this.artworks.find(a => a.id === artworkId);
+                    
+                    if (!artwork) return;
+                    
+                    document.getElementById('move-artwork-id').value = artworkId;
+                    document.getElementById('move-artwork-title').textContent = artwork.title;
+                    
+                    // Disable current status button
+                    const moveButtons = document.querySelectorAll('.move-to-btn');
+                    moveButtons.forEach(btn => {
+                        if (btn.dataset.status === artwork.status) {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    });
+                    
+                    this.openModal('move-modal');
+                },
+                
+                moveArtwork(artworkId, newStatus) {
+                    const index = this.artworks.findIndex(a => a.id === artworkId);
+                    
+                    if (index !== -1) {
+                        const artwork = this.artworks[index];
+                        const oldStatus = artwork.status;
+                        this.artworks[index].status = newStatus;
+                        this.renderArtworks();
+                        
+                        // Get status display names for toast
+                        const statusNames = {
+                            'featured': 'Featured',
+                            'exhibition': 'Current Exhibition',
+                            'review': 'Under Review',
+                            'upcoming': 'Coming Soon'
+                        };
+                        
+                        this.showToast(`"${artwork.title}" moved from ${statusNames[oldStatus]} to ${statusNames[newStatus]}`);
+                    }
+                    
+                    this.closeModal('move-modal');
+                },
+                
+                searchArtworks(query) {
+                    if (!query) {
+                        // Reset to show all
+                        this.renderArtworks();
+                        return;
+                    }
+                    
+                    query = query.toLowerCase();
+                    
+                    const sections = document.querySelectorAll('.artwork-section');
+                    
+                    sections.forEach(section => {
+                        const status = section.dataset.status;
+                        const artworkList = section.querySelector('.artwork-list');
+                        const categoryCount = section.querySelector('.category-count');
+                        
+                        // Filter artworks by status and search query
+                        const filteredArtworks = this.artworks.filter(artwork => {
+                            return artwork.status === status &&
+                                (this.currentFilter === 'all' || artwork.collection === this.currentFilter) &&
+                                this.activeFilters.collections.includes(artwork.collection) &&
+                                this.activeFilters.priorities.includes(artwork.priority) &&
+                                (artwork.title.toLowerCase().includes(query) || 
+                                 artwork.artist.toLowerCase().includes(query));
+                        });
+                        
+                        // Update count
+                        categoryCount.textContent = filteredArtworks.length;
+                        
+                        // Determine if we're in list or grid mode
+                        const isList = this.viewMode === 'list';
+                        
+                        // Clear existing list
+                        artworkList.innerHTML = '';
+                        
+                        // Add artwork items
+                        if (filteredArtworks.length === 0) {
+                            artworkList.innerHTML = `
+                                <li class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                    No matching artworks found
+                                </li>
+                            `;
+                        } else {
+                            if (isList) {
+                                // List mode
+                                artworkList.className = "divide-y divide-gray-200 dark:divide-gray-700 artwork-list";
+                                
+                                filteredArtworks.forEach(artwork => {
+                                    const priorityClass = this.getPriorityClass(artwork.priority);
+                                    
+                                    const item = document.createElement('li');
+                                    item.className = 'px-6 py-4 flex items-center';
+                                    item.dataset.id = artwork.id;
+                                    
+                                    item.innerHTML = `
+                                        <div class="min-w-0 flex-1 flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                                <i class="fas fa-image text-gray-500 dark:text-gray-400"></i>
+                                            </div>
+                                            <div class="min-w-0 flex-1 px-4">
+                                                <div class="text-sm font-medium text-primary truncate">${artwork.title}</div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">${artwork.artist}</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">${artwork.date}</div>
+                                            <div class="flex items-center">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${priorityClass}">
+                                                    ${artwork.priority}
+                                                </span>
+                                            </div>
+                                            <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 action-menu-btn" data-id="${artwork.id}">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                        </div>
+                                    `;
+                                    
+                                    artworkList.appendChild(item);
+                                });
+                            } else {
+                                // Grid mode
+                                artworkList.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 artwork-list";
+                                
+                                filteredArtworks.forEach(artwork => {
+                                    const priorityClass = this.getPriorityClass(artwork.priority);
+                                    
+                                    const item = document.createElement('div');
+                                    item.className = 'bg-white dark:bg-gray-700 rounded-lg shadow-sm overflow-hidden';
+                                    item.dataset.id = artwork.id;
+                                    
+                                    item.innerHTML = `
+                                        <div class="p-4">
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex-shrink-0 h-16 w-16 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center mr-4">
+                                                    <i class="fas fa-image text-gray-500 dark:text-gray-400 text-2xl"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h3 class="text-sm font-medium text-primary mb-1 truncate">${artwork.title}</h3>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${artwork.artist}</p>
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">${artwork.date}</span>
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${priorityClass}">
+                                                            ${artwork.priority}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 action-menu-btn ml-2" data-id="${artwork.id}">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    
+                                    artworkList.appendChild(item);
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Reattach action menu event listeners
+                    this.setupActionMenuListeners();
+                },
+                
+                closeMobileSidebar() {
+                    document.getElementById('mobile-sidebar').classList.remove('translate-x-0');
+                    document.getElementById('mobile-sidebar').classList.add('-translate-x-full');
+                },
+                
+                showToast(message) {
+                    const toastContainer = document.getElementById('toast-container');
+                    
+                    const toast = document.createElement('div');
+                    toast.className = 'toast bg-white dark:bg-gray-800 shadow-lg rounded-lg py-3 px-4 mb-3 flex items-center';
+                    toast.innerHTML = `
+                        <div class="text-green-500 dark:text-green-400 mr-3">
+                            <i class="fas fa-check-circle text-xl"></i>
+                        </div>
+                        <div class="flex-1 text-gray-800 dark:text-gray-200">
+                            ${message}
+                        </div>
+                    `;
+                    
+                    toastContainer.appendChild(toast);
+                    
+                    // Remove toast after animation completes
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 3000);
+                }
+            };
+            
+            // Initialize the gallery
